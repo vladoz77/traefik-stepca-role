@@ -1,0 +1,8 @@
+# meta/main.yaml
+galaxy_info:
+  author: vladoz77
+  description: Traefik with Step CA and Let's Encrypt
+  license: MIT
+  min_ansible_version: "2.15"
+
+dependencies: []
