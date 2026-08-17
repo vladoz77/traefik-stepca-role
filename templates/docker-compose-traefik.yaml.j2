@@ -1,0 +1,90 @@
+services:
+  {% if stepca_enabled -%}
+  step-ca:
+    image: "{{ stepca_image }}:{{ stepca_version }}"
+    container_name: "{{ stepca_container_name }}"
+    restart: "{{ restart_policy }}"
+    environment:
+      DOCKER_STEPCA_INIT_NAME: "{{ stepca_init_name }}"
+      DOCKER_STEPCA_INIT_DNS_NAMES: "{{ stepca_url }},localhost,{{ ansible_fqdn | default(inventory_hostname) }}"
+      DOCKER_STEPCA_INIT_REMOTE_MANAGEMENT: "true"
+      DOCKER_STEPCA_INIT_ACME: "true"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider --no-check-certificate https://localhost:9000/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    volumes:
+      - "{{ stepca_volume_name }}:/home/step"
+    networks:
+      {{ docker_network_name }}:
+        aliases:
+          - "{{ stepca_url }}"
+  {% endif %}
+
+  traefik:
+    image: "{{ traefik_image }}:{{ traefik_version }}"
+    container_name: "{{ traefik_container_name }}"
+    restart: "{{ restart_policy }}"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8082/metrics || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    {% if traefik_enable_dashboard -%}
+    labels:
+      - "traefik.enable=true"
+      # Dashboard
+      - "traefik.http.routers.dashboard.rule=Host(`{{ traefik_dashboard_url }}`)"
+      {% if letsencrypt_enabled or stepca_enabled -%}
+      - "traefik.http.routers.dashboard.entrypoints=websecure"
+      {% else -%}
+      - "traefik.http.routers.dashboard.entrypoints=web"
+      {% endif -%}
+      - "traefik.http.routers.dashboard.service=api@internal"
+      {% if stepca_enabled -%}
+      - "traefik.http.routers.dashboard.tls.certresolver=stepca"
+      {% elif letsencrypt_enabled -%}
+      - "traefik.http.routers.dashboard.tls.certresolver=le"
+      {% endif -%}
+      - "traefik.http.middlewares.dashboard-auth.basicauth.users={{ traefik_dashboard_user }}:{{ traefik_dashboard_password_hash }}"
+      - "traefik.http.routers.dashboard.middlewares=dashboard-auth"
+    {% endif -%}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "{{ acme_config_dir }}:/acme"
+      - "{{ traefik_config_dir }}:/etc/traefik"
+      {% if stepca_enabled -%}
+      - "{{ stepca_volume_name }}:/etc/ssl/homelab:ro"
+      {% endif %}
+
+    {% if stepca_enabled -%}
+    depends_on:
+      step-ca:
+        condition: service_healthy
+    {% endif %}
+
+    networks:
+      {{ docker_network_name }}:
+        ipv4_address: "{{ traefik_ip_address }}"
+        {% if stepca_enabled and traefik_dashboard_url -%}
+        aliases:
+          - "{{ traefik_dashboard_url }}"
+        {% endif %}
+
+
+networks:
+  {{ docker_network_name }}:
+    name: "{{ docker_network_name }}"
+    external: true
+
+{% if stepca_enabled %}
+volumes:
+  {{ stepca_volume_name }}:
+    name: "{{ stepca_volume_name }}"
+{% endif %}

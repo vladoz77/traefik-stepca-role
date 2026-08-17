@@ -1,0 +1,39 @@
+# defaults/main.yaml
+# docker config
+docker_network_name: "traefik"
+docker_network_subnet: "172.23.27.0/24"
+docker_network_gateway: "172.23.27.1"
+restart_policy: unless-stopped
+
+# step-ca config
+stepca_enabled: false
+stepca_volume_name: "step-ca-data"
+stepca_image: "smallstep/step-ca"
+stepca_version: "latest"
+stepca_container_name: "step-ca"
+stepca_init_name: "local-ca"
+stepca_url: "ca.home.local"
+
+# Traefik config
+traefik_ip_address: "172.23.27.254"
+traefik_log_level: DEBUG
+traefik_container_name: traefik
+traefik_image: "traefik"
+traefik_version: "latest"
+traefik_docker_dir: "/home/{{ ansible_user }}/{{ traefik_container_name }}"
+traefik_config_dir: "{{ traefik_docker_dir }}/config"
+traefik_enable_dashboard: false
+caserver_url: "https://{{  stepca_url }}:9000/acme/acme/directory"
+acme_storage_le: "acme/acme-le.json"
+acme_storage_stepca: "acme/acme-stepca.json"
+acme_email: ""
+acme_config_dir: "{{ traefik_docker_dir }}/acme"
+letsencrypt_enabled: true
+letsencrypt_staging_enabled: true
+letsencrypt_url: "https://acme-v02.api.letsencrypt.org/directory"
+letsencrypt_staging_url: "https://acme-staging-v02.api.letsencrypt.org/directory"
+
+# Dashboard config
+traefik_dashboard_url: "traefik.home.local"
+traefik_dashboard_user: "admin"
+traefik_dashboard_password_hash: "$$apr1$$CmiVRFjs$$bPQcSgQ.2HcTzM.HVTvAl1"  # admin:admin

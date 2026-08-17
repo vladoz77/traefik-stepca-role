@@ -1,0 +1,77 @@
+# # tasks/install.yaml
+- name: Validate required variables
+  ansible.builtin.assert:
+    that:
+      - not (letsencrypt_enabled and acme_email | length == 0)
+      - not (traefik_enable_dashboard and traefik_dashboard_password_hash | length == 0)
+    fail_msg: >
+      Проверь: если letsencrypt_enabled=true — обязателен acme_email;
+      если traefik_enable_dashboard=true — обязателен traefik_dashboard_password_hash.
+
+- name: Create a traefik network with custom IPAM config
+  community.docker.docker_network:
+    name: "{{ docker_network_name }}"
+    state: present
+    ipam_config:
+      - subnet: "{{ docker_network_subnet }}"
+        gateway: "{{ docker_network_gateway }}"
+
+- name: Create folder traefik
+  ansible.builtin.file:
+    path: "{{ traefik_docker_dir }}"
+    group: "{{ ansible_user }}"
+    owner: "{{ ansible_user }}"
+    state: directory
+
+- name: Create folder config
+  ansible.builtin.file:
+    path: "{{ traefik_config_dir }}"
+    group: "{{ ansible_user }}"
+    owner: "{{ ansible_user }}"
+    state: directory
+
+- name: Ensure ACME storage exists (Let's Encrypt)
+  ansible.builtin.copy:
+    dest: "{{ acme_config_dir }}/{{ acme_storage_le | basename }}"
+    content: "{}\n"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0600"
+    force: false
+  when: letsencrypt_enabled | bool
+
+- name: Ensure ACME storage exists (step-ca)
+  ansible.builtin.copy:
+    dest: "{{ acme_config_dir }}/{{ acme_storage_stepca | basename }}"
+    content: "{}\n"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0600"
+    force: false
+  when: stepca_enabled | bool
+
+- name: Ensure ACME storage exists
+  ansible.builtin.copy:
+    dest: "{{ acme_config_dir }}/acme.json"
+    content: "{}\n"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0600"
+    force: false
+
+- name: Copy template traefik config to {{ traefik_config_dir }}
+  ansible.builtin.template:
+    src: "templates/traefik.yml.j2"
+    dest: "{{ traefik_config_dir }}/traefik.yml"
+    group: "{{ ansible_user }}"
+    owner: "{{ ansible_user }}" 
+  notify: Start traefik
+
+- name: Copy template docker compose to {{ traefik_docker_dir }}
+  ansible.builtin.template:
+    src: "templates/docker-compose-traefik.yaml.j2"
+    dest: "{{ traefik_docker_dir }}/docker-compose.yaml"
+    group: "{{ ansible_user }}"
+    owner: "{{ ansible_user }}"
+    validate: "docker compose -f %s config -q"
+  notify: Start traefik

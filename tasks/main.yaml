@@ -1,0 +1,4 @@
+# tasks/main.yaml
+- name: install {{ traefik_container_name }}
+  ansible.builtin.include_tasks:
+    install.yaml

@@ -1,0 +1,7 @@
+# handlers/main.yaml
+- name: Start traefik
+  community.docker.docker_compose_v2:
+    project_src: "{{ traefik_docker_dir }}"
+    state: present
+    recreate: auto
+    remove_orphans: true
