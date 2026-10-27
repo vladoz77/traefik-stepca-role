@@ -1,4 +1,33 @@
 # tasks/main.yaml
+- name: Validate required variables
+  ansible.builtin.include_tasks:
+    validation.yaml
+
+- name: Create a traefik network with custom IPAM config
+  community.docker.docker_network:
+    name: "{{ docker_network_name }}"
+    state: present
+    ipam_config:
+      - subnet: "{{ docker_network_subnet }}"
+        gateway: "{{ docker_network_gateway }}"
+
+- name: install {{ stepca_container_name }}
+  ansible.builtin.include_tasks:
+    stepca-install.yaml
+  when: stepca_enabled | bool
+
+- name: Wait for step-ca to be healthy
+  community.docker.docker_container_info:
+    name: "{{ stepca_container_name }}"
+  register: stepca_info
+  until:
+    - stepca_info.container is defined
+    - stepca_info.container.State.Health.Status is defined
+    - stepca_info.container.State.Health.Status == "healthy"
+  retries: 15
+  delay: 5
+  when: stepca_enabled | bool
+
 - name: install {{ traefik_container_name }}
   ansible.builtin.include_tasks:
-    install.yaml
+    traefik-install.yaml

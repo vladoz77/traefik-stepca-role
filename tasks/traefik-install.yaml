@@ -1,21 +1,4 @@
 # # tasks/install.yaml
-- name: Validate required variables
-  ansible.builtin.assert:
-    that:
-      - not (letsencrypt_enabled and acme_email | length == 0)
-      - not (traefik_enable_dashboard and traefik_dashboard_password_hash | length == 0)
-    fail_msg: >
-      Проверь: если letsencrypt_enabled=true — обязателен acme_email;
-      если traefik_enable_dashboard=true — обязателен traefik_dashboard_password_hash.
-
-- name: Create a traefik network with custom IPAM config
-  community.docker.docker_network:
-    name: "{{ docker_network_name }}"
-    state: present
-    ipam_config:
-      - subnet: "{{ docker_network_subnet }}"
-        gateway: "{{ docker_network_gateway }}"
-
 - name: Create folder traefik
   ansible.builtin.file:
     path: "{{ traefik_docker_dir }}"

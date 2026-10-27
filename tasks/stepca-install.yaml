@@ -1,0 +1,16 @@
+# tasks/stepca-install.yaml
+- name: Create folder step-ca
+  ansible.builtin.file:
+    path: "{{ stepca_docker_dir }}"
+    group: "{{ ansible_user }}"
+    owner: "{{ ansible_user }}"
+    state: directory
+
+- name: Copy template docker compose to {{ traefik_docker_dir }}
+  ansible.builtin.template:
+    src: "templates/docker-compose-stepca.yaml.j2"
+    dest: "{{ stepca_docker_dir }}/docker-compose.yaml"
+    group: "{{ ansible_user }}"
+    owner: "{{ ansible_user }}"
+    validate: "docker compose -f %s config -q"
+  notify: Start stepca

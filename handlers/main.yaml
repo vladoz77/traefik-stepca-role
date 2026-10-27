@@ -5,3 +5,10 @@
     state: present
     recreate: auto
     remove_orphans: true
+
+- name: Start stepca
+  community.docker.docker_compose_v2:
+    project_src: "{{ stepca_docker_dir }}"
+    state: present
+    recreate: auto
+    remove_orphans: true

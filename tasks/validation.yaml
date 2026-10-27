@@ -1,0 +1,34 @@
+# tasks/validation.yaml
+- name: check docker cli is installed
+  ansible.builtin.command: docker --version
+  register: docker_cli_check
+  changed_when: false
+  failed_when: false
+
+- name: Assert that Docker CLI is installed 
+  ansible.builtin.assert:
+    that:
+      - docker_cli_check.rc == 0
+    fail_msg: "Docker CLI is not installed. Please install Docker before running this playbook." 
+    success_msg: "Docker CLI is installed."
+
+- name: Acme email validation
+  ansible.builtin.assert:
+    that:
+      - not (letsencrypt_enabled and acme_email | length == 0)
+    fail_msg: "If letsencrypt_enabled=true, acme_email is required."
+    success_msg: "Acme email validation passed."
+
+- name: Traefik dashboard password validation
+  ansible.builtin.assert:
+    that:
+      - not (traefik_enable_dashboard and traefik_dashboard_password_hash | length == 0)
+    fail_msg: "If traefik_enable_dashboard=true, traefik_dashboard_password_hash is required."
+    success_msg: "Traefik dashboard password validation passed."
+
+- name: Le and step-ca enabled validation
+  ansible.builtin.assert:
+    that:
+      - not (letsencrypt_enabled and stepca_enabled)
+    fail_msg: "Both letsencrypt_enabled and stepca_enabled cannot be true at the same time. Please enable only one of them."
+    success_msg: "Le or step-ca enabled validation passed."

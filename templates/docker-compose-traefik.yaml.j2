@@ -1,28 +1,5 @@
+{# templates/docker-compose-traefik.yaml.j2 #}
 services:
-  {% if stepca_enabled -%}
-  step-ca:
-    image: "{{ stepca_image }}:{{ stepca_version }}"
-    container_name: "{{ stepca_container_name }}"
-    restart: "{{ restart_policy }}"
-    environment:
-      DOCKER_STEPCA_INIT_NAME: "{{ stepca_init_name }}"
-      DOCKER_STEPCA_INIT_DNS_NAMES: "{{ stepca_url }},localhost,{{ ansible_fqdn | default(inventory_hostname) }}"
-      DOCKER_STEPCA_INIT_REMOTE_MANAGEMENT: "true"
-      DOCKER_STEPCA_INIT_ACME: "true"
-    healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider --no-check-certificate https://localhost:9000/health || exit 1"]
-      interval: 30s
-      timeout: 5s
-      retries: 5
-      start_period: 20s
-    volumes:
-      - "{{ stepca_volume_name }}:/home/step"
-    networks:
-      {{ docker_network_name }}:
-        aliases:
-          - "{{ stepca_url }}"
-  {% endif %}
-
   traefik:
     image: "{{ traefik_image }}:{{ traefik_version }}"
     container_name: "{{ traefik_container_name }}"
@@ -63,12 +40,6 @@ services:
       - "{{ stepca_volume_name }}:/etc/ssl/homelab:ro"
       {% endif %}
 
-    {% if stepca_enabled -%}
-    depends_on:
-      step-ca:
-        condition: service_healthy
-    {% endif %}
-
     networks:
       {{ docker_network_name }}:
         ipv4_address: "{{ traefik_ip_address }}"
@@ -86,5 +57,5 @@ networks:
 {% if stepca_enabled %}
 volumes:
   {{ stepca_volume_name }}:
-    name: "{{ stepca_volume_name }}"
+    external: true
 {% endif %}

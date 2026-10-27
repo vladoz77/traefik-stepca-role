@@ -1,0 +1,32 @@
+{# templates/docker-compose-stepca.yaml.j2 #}
+services:
+  step-ca:
+    image: "{{ stepca_image }}:{{ stepca_version }}"
+    container_name: "{{ stepca_container_name }}"
+    restart: "{{ restart_policy }}"
+    environment:
+      DOCKER_STEPCA_INIT_NAME: "{{ stepca_init_name }}"
+      DOCKER_STEPCA_INIT_DNS_NAMES: "{{ stepca_url }},localhost,{{ ansible_fqdn | default(inventory_hostname) }}"
+      DOCKER_STEPCA_INIT_REMOTE_MANAGEMENT: "true"
+      DOCKER_STEPCA_INIT_ACME: "true"
+    healthcheck:
+    test: ["CMD", "step", "ca", "health", "--ca-url", "https://localhost:9000"]
+    interval: 30s
+    timeout: 5s
+    retries: 5
+    start_period: 20s
+    volumes:
+      - "{{ stepca_volume_name }}:/home/step"
+    networks:
+      {{ docker_network_name }}:
+        aliases:
+          - "{{ stepca_url }}"
+
+networks:
+  {{ docker_network_name }}:
+    name: "{{ docker_network_name }}"
+    external: true
+
+volumes:
+  {{ stepca_volume_name }}:
+    name: "{{ stepca_volume_name }}"

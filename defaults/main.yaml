@@ -7,10 +7,11 @@ restart_policy: unless-stopped
 
 # step-ca config
 stepca_enabled: false
+stepca_docker_dir: "/home/{{ ansible_user }}/{{ stepca_container_name }}"
 stepca_volume_name: "step-ca-data"
 stepca_image: "smallstep/step-ca"
 stepca_version: "latest"
-stepca_container_name: "step-ca"
+stepca_container_name: "stepca"
 stepca_init_name: "local-ca"
 stepca_url: "ca.home.local"
 
