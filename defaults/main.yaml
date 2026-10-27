@@ -13,10 +13,12 @@ stepca_image: "smallstep/step-ca"
 stepca_version: "latest"
 stepca_container_name: "stepca"
 stepca_init_name: "local-ca"
+stepca_certificates_duration_hours: 2160
 stepca_url: "ca.home.local"
 
 # Traefik config
 traefik_ip_address: "172.23.27.254"
+traefik_bind_address: "0.0.0.0"
 traefik_log_level: DEBUG
 traefik_container_name: traefik
 traefik_image: "traefik"

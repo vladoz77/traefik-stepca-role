@@ -29,6 +29,7 @@ certificatesResolvers:
       caServer: "{{ caserver_url }}"
       caCertificates:
       - /etc/ssl/homelab/certs/root_ca.crt
+      certificatesDuration: {{ stepca_certificates_duration_hours }}
       storage: "{{ acme_storage_stepca }}"
       httpChallenge:
         entryPoint: web

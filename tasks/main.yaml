@@ -16,6 +16,10 @@
     stepca-install.yaml
   when: stepca_enabled | bool
 
+- name: Flush handlers (start step-ca before waiting)
+  ansible.builtin.meta: flush_handlers
+  when: stepca_enabled | bool
+
 - name: Wait for step-ca to be healthy
   community.docker.docker_container_info:
     name: "{{ stepca_container_name }}"

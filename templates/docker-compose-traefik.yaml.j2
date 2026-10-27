@@ -30,8 +30,8 @@ services:
       - "traefik.http.routers.dashboard.middlewares=dashboard-auth"
     {% endif -%}
     ports:
-      - "80:80"
-      - "443:443"
+      - "{{ traefik_bind_address }}:80:80"
+      - "{{ traefik_bind_address }}:443:443"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
       - "{{ acme_config_dir }}:/acme"
