@@ -14,3 +14,23 @@
     owner: "{{ ansible_user }}"
     validate: "docker compose -f %s config -q"
   notify: Start stepca
+
+- name: Flush handlers (start step-ca before waiting)
+  ansible.builtin.meta: flush_handlers
+
+- name: Get step-ca root certificate fingerprint
+  ansible.builtin.command:
+    cmd: "docker exec {{ stepca_container_name }} step certificate fingerprint /home/step/certs/root_ca.crt"
+  register: stepca_root_fp
+  until: stepca_root_fp.rc == 0
+  retries: 20
+  delay: 3
+  changed_when: false
+
+- name: Write step-ca root certificate fingerprint to file
+  ansible.builtin.copy:
+    content: "{{ stepca_root_fp.stdout | trim }}\n"
+    dest: "{{ stepca_docker_dir }}/root_ca.fingerprint"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0644"

@@ -13,6 +13,14 @@
     owner: "{{ ansible_user }}"
     state: directory
 
+- name: Create folder acme
+  ansible.builtin.file:
+    path: "{{ acme_config_dir }}"
+    group: "{{ ansible_user }}"
+    owner: "{{ ansible_user }}"
+    mode: "0700"
+    state: directory
+
 - name: Ensure ACME storage exists (Let's Encrypt)
   ansible.builtin.copy:
     dest: "{{ acme_config_dir }}/{{ acme_storage_le | basename }}"
@@ -32,15 +40,6 @@
     mode: "0600"
     force: false
   when: stepca_enabled | bool
-
-- name: Ensure ACME storage exists
-  ansible.builtin.copy:
-    dest: "{{ acme_config_dir }}/acme.json"
-    content: "{}\n"
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
-    mode: "0600"
-    force: false
 
 - name: Copy template traefik config to {{ traefik_config_dir }}
   ansible.builtin.template:

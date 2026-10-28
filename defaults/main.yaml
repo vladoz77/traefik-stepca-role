@@ -6,7 +6,7 @@ docker_network_gateway: "172.23.27.1"
 restart_policy: unless-stopped
 
 # step-ca config
-stepca_enabled: false
+stepca_enabled: true
 stepca_docker_dir: "/home/{{ ansible_user }}/{{ stepca_container_name }}"
 stepca_volume_name: "step-ca-data"
 stepca_image: "smallstep/step-ca"
@@ -31,8 +31,8 @@ acme_storage_le: "acme/acme-le.json"
 acme_storage_stepca: "acme/acme-stepca.json"
 acme_email: ""
 acme_config_dir: "{{ traefik_docker_dir }}/acme"
-letsencrypt_enabled: true
-letsencrypt_staging_enabled: true
+letsencrypt_enabled: false
+letsencrypt_staging_enabled: false
 letsencrypt_url: "https://acme-v02.api.letsencrypt.org/directory"
 letsencrypt_staging_url: "https://acme-staging-v02.api.letsencrypt.org/directory"
 

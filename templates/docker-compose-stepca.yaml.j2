@@ -9,12 +9,18 @@ services:
       DOCKER_STEPCA_INIT_DNS_NAMES: "{{ stepca_url }},localhost,{{ ansible_fqdn | default(inventory_hostname) }}"
       DOCKER_STEPCA_INIT_REMOTE_MANAGEMENT: "true"
       DOCKER_STEPCA_INIT_ACME: "true"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.tcp.routers.stepca.rule=HostSNI(`{{ stepca_url }}`)"
+      - "traefik.tcp.routers.stepca.entrypoints=websecure"
+      - "traefik.tcp.routers.stepca.tls.passthrough=true"
+      - "traefik.tcp.services.stepca.loadbalancer.server.port=9000"
     healthcheck:
-    test: ["CMD", "step", "ca", "health", "--ca-url", "https://localhost:9000"]
-    interval: 30s
-    timeout: 5s
-    retries: 5
-    start_period: 20s
+      test: ["CMD", "step", "ca", "health", "--ca-url", "https://localhost:9000"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     volumes:
       - "{{ stepca_volume_name }}:/home/step"
     networks:
