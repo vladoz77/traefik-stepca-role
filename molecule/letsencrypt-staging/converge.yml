@@ -1,0 +1,22 @@
+---
+- name: Deploy Traefik with Let's Encrypt staging for Molecule testing
+  hosts: all
+  gather_facts: true
+  roles:
+    - role: "{{ playbook_dir }}/../.."
+      vars:
+        ansible_user: root
+        docker_network_name: "molecule-le-staging-{{ inventory_hostname }}"
+        docker_network_subnet: "{{ '172.31.242.0/24' if inventory_hostname == 'ubuntu' else '172.31.243.0/24' }}"
+        docker_network_gateway: "{{ '172.31.242.1' if inventory_hostname == 'ubuntu' else '172.31.243.1' }}"
+        traefik_ip_address: "{{ '172.31.242.254' if inventory_hostname == 'ubuntu' else '172.31.243.254' }}"
+        traefik_container_name: "molecule-le-staging-{{ inventory_hostname }}-traefik"
+        traefik_docker_dir: /tmp/traefik-stepca-molecule-le-staging/traefik
+        traefik_config_dir: "{{ traefik_docker_dir }}/config"
+        acme_config_dir: "{{ traefik_docker_dir }}/acme"
+        traefik_enable_dashboard: true
+        traefik_dashboard_url: "le-staging-test.{{ inventory_hostname }}.molecule.test"
+        stepca_enabled: false
+        letsencrypt_enabled: true
+        letsencrypt_staging_enabled: true
+        acme_email: molecule@example.invalid

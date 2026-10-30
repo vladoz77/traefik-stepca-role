@@ -1,0 +1,22 @@
+- name: Prepare
+  hosts: all
+  become: true
+  roles:
+    - role: docker
+      vars:
+        docker_daemon_options:
+          storage-driver: vfs
+          data-root: /var/lib/docker-vfs
+          registry-mirrors:
+            - http://10.84.101.69:5000
+          insecure-registries:
+            - 10.84.101.69:5000
+            - 10.84.101.69:5001
+            - 10.84.101.69:5002
+          dns:
+            - 10.10.0.254
+  tasks:
+    - name: Install Python bindings for community.docker
+      ansible.builtin.package:
+        name: [python3-docker, python3-requests]
+        state: present

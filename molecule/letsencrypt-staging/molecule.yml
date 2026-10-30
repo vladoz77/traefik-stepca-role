@@ -1,0 +1,52 @@
+driver:
+  name: docker
+prerun: false
+platforms:
+  - name: ubuntu
+    image: geerlingguy/docker-ubuntu2204-ansible:latest
+    pre_build_image: true
+    privileged: true
+    command: /lib/systemd/systemd
+    override_command: false
+    cgroupns_mode: host
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    tmpfs:
+      - /run
+      - /run/lock
+    env:
+      container: docker
+    tty: true
+  - name: rocky
+    image: geerlingguy/docker-rockylinux9-ansible:latest
+    pre_build_image: true
+    privileged: true
+    command: /usr/lib/systemd/systemd
+    override_command: false
+    cgroupns_mode: host
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    tmpfs:
+      - /run
+      - /run/lock
+    env:
+      container: docker
+    tty: true
+provisioner:
+  name: ansible
+ansible:
+  playbooks:
+    converge: converge.yml
+    prepare: ../stepca/prepare.yml
+    verify: verify.yml
+    cleanup: cleanup.yml
+scenario:
+  test_sequence:
+    - destroy
+    - syntax
+    - create
+    - prepare
+    - converge
+    - verify
+    - cleanup
+    - destroy

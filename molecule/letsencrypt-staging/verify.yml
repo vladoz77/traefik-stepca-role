@@ -1,0 +1,47 @@
+---
+- name: Verify the Let's Encrypt staging configuration
+  hosts: all
+  gather_facts: true
+  vars:
+    traefik_config_path: /tmp/traefik-stepca-molecule-le-staging/traefik/config/traefik.yml
+    traefik_container_name: "molecule-le-staging-{{ inventory_hostname }}-traefik"
+  tasks:
+    - name: Wait for the Traefik healthcheck to pass
+      community.docker.docker_container_info:
+        name: "{{ traefik_container_name }}"
+      register: traefik_container
+      changed_when: false
+      retries: 12
+      delay: 5
+      until:
+        - traefik_container.container is defined
+        - traefik_container.container.State.Health.Status is defined
+        - traefik_container.container.State.Health.Status == 'healthy'
+
+    - name: Verify the Traefik metrics endpoint responds
+      ansible.builtin.command:
+        argv:
+          - docker
+          - exec
+          - "{{ traefik_container_name }}"
+          - wget
+          - -q
+          - --spider
+          - http://localhost:8082/metrics
+      register: metrics_check
+      changed_when: false
+      retries: 12
+      delay: 5
+      until: metrics_check.rc == 0
+
+    - name: Read the rendered Traefik ACME configuration
+      ansible.builtin.slurp:
+        src: "{{ traefik_config_path }}"
+      register: traefik_config
+      changed_when: false
+
+    - name: Assert staging is configured without requesting a public certificate
+      ansible.builtin.assert:
+        that:
+          - "'https://acme-staging-v02.api.letsencrypt.org/directory' in (traefik_config.content | b64decode)"
+        fail_msg: "Traefik is not configured to use the Let's Encrypt staging ACME directory."

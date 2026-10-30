@@ -2,22 +2,22 @@
 - name: Create folder traefik
   ansible.builtin.file:
     path: "{{ traefik_docker_dir }}"
-    group: "{{ ansible_user }}"
-    owner: "{{ ansible_user }}"
+    group: "{{ traefik_stepca_user }}"
+    owner: "{{ traefik_stepca_user }}"
     state: directory
 
 - name: Create folder config
   ansible.builtin.file:
     path: "{{ traefik_config_dir }}"
-    group: "{{ ansible_user }}"
-    owner: "{{ ansible_user }}"
+    group: "{{ traefik_stepca_user }}"
+    owner: "{{ traefik_stepca_user }}"
     state: directory
 
 - name: Create folder acme
   ansible.builtin.file:
     path: "{{ acme_config_dir }}"
-    group: "{{ ansible_user }}"
-    owner: "{{ ansible_user }}"
+    group: "{{ traefik_stepca_user }}"
+    owner: "{{ traefik_stepca_user }}"
     mode: "0700"
     state: directory
 
@@ -25,8 +25,8 @@
   ansible.builtin.copy:
     dest: "{{ acme_config_dir }}/{{ acme_storage_le | basename }}"
     content: "{}\n"
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
+    owner: "{{ traefik_stepca_user }}"
+    group: "{{ traefik_stepca_user }}"
     mode: "0600"
     force: false
   when: letsencrypt_enabled | bool
@@ -35,8 +35,8 @@
   ansible.builtin.copy:
     dest: "{{ acme_config_dir }}/{{ acme_storage_stepca | basename }}"
     content: "{}\n"
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
+    owner: "{{ traefik_stepca_user }}"
+    group: "{{ traefik_stepca_user }}"
     mode: "0600"
     force: false
   when: stepca_enabled | bool
@@ -45,15 +45,15 @@
   ansible.builtin.template:
     src: "templates/traefik.yml.j2"
     dest: "{{ traefik_config_dir }}/traefik.yml"
-    group: "{{ ansible_user }}"
-    owner: "{{ ansible_user }}" 
+    group: "{{ traefik_stepca_user }}"
+    owner: "{{ traefik_stepca_user }}" 
   notify: Start traefik
 
 - name: Copy template docker compose to {{ traefik_docker_dir }}
   ansible.builtin.template:
     src: "templates/docker-compose-traefik.yaml.j2"
     dest: "{{ traefik_docker_dir }}/docker-compose.yaml"
-    group: "{{ ansible_user }}"
-    owner: "{{ ansible_user }}"
+    group: "{{ traefik_stepca_user }}"
+    owner: "{{ traefik_stepca_user }}"
     validate: "docker compose -f %s config -q"
   notify: Start traefik

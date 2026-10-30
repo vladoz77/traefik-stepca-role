@@ -4,6 +4,7 @@ docker_network_name: "traefik"
 docker_network_subnet: "172.23.27.0/24"
 docker_network_gateway: "172.23.27.1"
 restart_policy: unless-stopped
+traefik_stepca_user: "{{ ansible_user | default(ansible_facts['user_id']) }}"
 
 # step-ca config
 stepca_enabled: true
@@ -39,4 +40,4 @@ letsencrypt_staging_url: "https://acme-staging-v02.api.letsencrypt.org/directory
 # Dashboard config
 traefik_dashboard_url: "traefik.home.local"
 traefik_dashboard_user: "admin"
-traefik_dashboard_password_hash: "$$apr1$$CmiVRFjs$$bPQcSgQ.2HcTzM.HVTvAl1"  # admin:admin
+traefik_dashboard_password_hash: "$$apr1$$CmiVRFjs$$rMXvR94BugiXwu0or8TIH1"  # admin:admin

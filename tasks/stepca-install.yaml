@@ -2,16 +2,16 @@
 - name: Create folder step-ca
   ansible.builtin.file:
     path: "{{ stepca_docker_dir }}"
-    group: "{{ ansible_user }}"
-    owner: "{{ ansible_user }}"
+    group: "{{ traefik_stepca_user }}"
+    owner: "{{ traefik_stepca_user }}"
     state: directory
 
 - name: Copy template docker compose to {{ traefik_docker_dir }}
   ansible.builtin.template:
     src: "templates/docker-compose-stepca.yaml.j2"
     dest: "{{ stepca_docker_dir }}/docker-compose.yaml"
-    group: "{{ ansible_user }}"
-    owner: "{{ ansible_user }}"
+    group: "{{ traefik_stepca_user }}"
+    owner: "{{ traefik_stepca_user }}"
     validate: "docker compose -f %s config -q"
   notify: Start stepca
 
@@ -31,6 +31,6 @@
   ansible.builtin.copy:
     content: "{{ stepca_root_fp.stdout | trim }}\n"
     dest: "{{ stepca_docker_dir }}/root_ca.fingerprint"
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
+    owner: "{{ traefik_stepca_user }}"
+    group: "{{ traefik_stepca_user }}"
     mode: "0644"

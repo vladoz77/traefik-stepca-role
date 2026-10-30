@@ -33,6 +33,7 @@
   - [Доверие к корневому сертификату](#доверие-к-корневому-сертификату)
   - [Что создаётся на хосте](#что-создаётся-на-хосте)
   - [Проверка](#проверка)
+  - [Тесты Molecule](#тесты-molecule)
   - [Ограничения](#ограничения)
   - [Ссылки](#ссылки)
 
@@ -120,7 +121,7 @@ openssl passwd -apr1 'your-password'
 htpasswd -nb admin 'your-password'
 ```
 
-Храните хеш в Ansible Vault. Значения по умолчанию нет: при включённом dashboard пустой хеш остановит роль на валидации.
+Храните собственный хеш в Ansible Vault и не используйте тестовые учётные данные в production. В defaults задан тестовый пользователь `admin` с паролем `admin`; при включённом dashboard пустой хеш остановит роль на валидации.
 
 ## Переменные
 
@@ -153,7 +154,7 @@ htpasswd -nb admin 'your-password'
 | `traefik_enable_dashboard` | `false` | Включить dashboard |
 | `traefik_dashboard_url` | `traefik.home.local` | Имя хоста dashboard |
 | `traefik_dashboard_user` | `admin` | Пользователь |
-| `traefik_dashboard_password_hash` | _пусто_ | Хеш пароля (обязателен при включённом dashboard) |
+| `traefik_dashboard_password_hash` | тестовый хеш `admin:admin` | Хеш пароля; замените в production |
 
 ### step-ca
 
@@ -338,6 +339,24 @@ docker compose -f /home/vlad/traefik/docker-compose.yaml config -q
 # сертификат dashboard
 curl --cacert /home/vlad/traefik/config/root_ca.crt https://traefik.int.example.com
 ```
+
+## Тесты Molecule
+
+Оба сценария создают две Docker-машины: Ubuntu 22.04 и Rocky Linux 9. В каждой запускается systemd, устанавливаются Docker Engine и Compose plugin, после чего роль разворачивается внутри гостевой системы. Для Docker-in-Docker контейнеры тестовых ОС запускаются в `privileged` режиме; используйте эти сценарии только на доверенном тестовом Docker-хосте.
+
+На хосте нужны Docker Engine, Ansible, коллекция `community.docker` и Molecule с Docker-драйвером:
+
+```bash
+python -m pip install molecule "molecule-plugins[docker]"
+ansible-galaxy collection install -r requirements.yaml
+molecule test -s stepca
+```
+
+Сценарий `stepca` проверяет на обеих ОС статусы healthcheck контейнеров step-ca и Traefik, выпуск сертификата для dashboard и цепочку до корневого сертификата step-ca.
+
+Сценарий `letsencrypt-staging` разворачивает роль на обеих ОС, проверяет healthcheck Traefik и staging ACME endpoint. Он **не** запрашивает сертификат: для реального Let's Encrypt staging-выпуска нужны публичный домен и доступный извне HTTP-01 порт 80. Это позволяет запускать тест без DNS-настройки и без открытия портов тестовых контейнеров наружу.
+
+Оба сценария удаляют созданные гостевые контейнеры и тестовые данные при завершении.
 
 ## Ограничения
 

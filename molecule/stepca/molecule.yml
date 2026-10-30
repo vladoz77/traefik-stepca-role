@@ -1,0 +1,70 @@
+driver:
+  name: docker
+prerun: false
+
+platforms:
+  - name: ubuntu
+    image: geerlingguy/docker-ubuntu2204-ansible:latest
+    pre_build_image: true
+    privileged: true
+    command: /lib/systemd/systemd
+    override_command: false
+    cgroupns_mode: host
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    tmpfs: [/run, /run/lock]
+    env:
+      container: docker
+    tty: true
+  - name: rocky
+    image: geerlingguy/docker-rockylinux9-ansible:latest
+    pre_build_image: true
+    privileged: true
+    command: /usr/lib/systemd/systemd
+    override_command: false
+    cgroupns_mode: host
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    tmpfs: [/run, /run/lock]
+    env:
+      container: docker
+    tty: true
+
+provisioner:
+  name: ansible
+  inventory:
+    group_vars:
+      all:
+        test_root: /tmp/traefik-stepca-molecule
+        test_domain: "{{ inventory_hostname }}.molecule.test"
+        docker_network_name: "molecule-stepca-{{ inventory_hostname }}"
+        docker_network_subnet: 172.31.240.0/24
+        docker_network_gateway: 172.31.240.1
+        traefik_ip_address: 172.31.240.254
+        traefik_container_name: "molecule-stepca-{{ inventory_hostname }}-traefik"
+        traefik_docker_dir: "{{ test_root }}/traefik"
+        traefik_config_dir: "{{ traefik_docker_dir }}/config"
+        acme_config_dir: "{{ traefik_docker_dir }}/acme"
+        traefik_enable_dashboard: true
+        traefik_dashboard_url: "stepca-test.{{ test_domain }}"
+        stepca_enabled: true
+        stepca_url: "ca.{{ test_domain }}"
+        stepca_container_name: "molecule-stepca-{{ inventory_hostname }}-ca"
+        stepca_docker_dir: "{{ test_root }}/stepca"
+        stepca_volume_name: "molecule-stepca-{{ inventory_hostname }}-data"
+
+dependency:
+  name: galaxy
+  options:
+    requirements-file: ${MOLECULE_SCENARIO_DIRECTORY}/requirements.yml
+
+scenario:
+  test_sequence:
+    - dependency
+    - destroy
+    - syntax
+    - create
+    - prepare
+    - converge
+    - verify
+    - destroy

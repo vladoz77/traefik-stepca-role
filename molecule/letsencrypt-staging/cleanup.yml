@@ -1,0 +1,28 @@
+---
+- name: Remove the Let's Encrypt staging Molecule deployment
+  hosts: all
+  gather_facts: false
+  vars:
+    traefik_docker_dir: /tmp/traefik-stepca-molecule-le-staging/traefik
+    docker_network_name: "molecule-le-staging-{{ inventory_hostname }}"
+  tasks:
+    - name: Check whether the Traefik compose project exists
+      ansible.builtin.stat:
+        path: "{{ traefik_docker_dir }}/docker-compose.yaml"
+      register: traefik_compose
+
+    - name: Stop the Traefik compose project
+      community.docker.docker_compose_v2:
+        project_src: "{{ traefik_docker_dir }}"
+        state: absent
+      when: traefik_compose.stat.exists
+
+    - name: Remove the test Docker network
+      community.docker.docker_network:
+        name: "{{ docker_network_name }}"
+        state: absent
+
+    - name: Remove test files
+      ansible.builtin.file:
+        path: /tmp/traefik-stepca-molecule-le-staging
+        state: absent

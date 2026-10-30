@@ -1,0 +1,66 @@
+# molecule/stepca/verify.yml
+---
+- name: Verify Traefik and step-ca
+  hosts: all
+  gather_facts: true
+  gather_subset: [min]
+  vars:
+    certificate_domain: "{{ traefik_dashboard_url }}"
+    verify_dir: "{{ test_root }}/verify"
+    root_certificate_path: "{{ verify_dir }}/root.crt"
+    ca_trust:
+      Debian:
+        dir: /usr/local/share/ca-certificates
+        update_command: update-ca-certificates
+      RedHat:
+        dir: /etc/pki/ca-trust/source/anchors
+        update_command: update-ca-trust
+  tasks:
+    - name: Create the verification directory
+      ansible.builtin.file:
+        path: "{{ verify_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Wait for step-ca and Traefik healthchecks to pass
+      community.docker.docker_container_info:
+        name: "{{ item }}"
+      loop:
+        - "{{ stepca_container_name }}"
+        - "{{ traefik_container_name }}"
+      register: containers_info
+      changed_when: false
+      retries: 12
+      delay: 5
+      until:
+        - containers_info.container is defined
+        - containers_info.container.State.Health.Status is defined
+        - containers_info.container.State.Health.Status == 'healthy'
+
+    - name: Assert containers are running and have not restarted
+      ansible.builtin.assert:
+        that:
+          - item.container.State.Running
+          - not item.container.State.Restarting
+          - item.container.RestartCount == 0
+        fail_msg: >-
+          {{ item.item }}: running={{ item.container.State.Running }},
+          restarting={{ item.container.State.Restarting }},
+          restart_count={{ item.container.RestartCount }}
+      loop: "{{ containers_info.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
+    - name: Copy the step-ca root certificate out of the CA container
+      ansible.builtin.command:
+        argv:
+          - docker
+          - cp
+          - "{{ stepca_container_name }}:/home/step/certs/root_ca.crt"
+          - "{{ ca_trust[ansible_facts['os_family']].dir }}/molecule-stepca-root.crt"
+      changed_when: false
+
+    - name: Update the system CA trust store
+      ansible.builtin.command:
+        cmd: "{{ ca_trust[ansible_facts['os_family']].update_command }}"
+      changed_when: true
