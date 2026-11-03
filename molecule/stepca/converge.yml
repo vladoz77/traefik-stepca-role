@@ -5,4 +5,4 @@
   become: true
   gather_facts: true
   roles:
-    - role: ../../traefik-stepca
+    - role: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}"
