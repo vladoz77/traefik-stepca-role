@@ -26,6 +26,11 @@ jobs:
         with:
           python-version: '3.13'
 
+      - name: Load netfilter modules
+        run: |
+          sudo modprobe iptable_nat ip6table_nat || true
+          lsmod | grep -E 'nat|nf_tables' || true
+
       - name: Install dependencies
         run: pip install molecule ansible-core "molecule-plugins[docker]"
 

@@ -62,12 +62,7 @@ dependency:
   options:
     requirements-file: ${MOLECULE_SCENARIO_DIRECTORY}/requirements.yml
 
-ansible:
-  playbooks:
-    converge: converge.yml
-    prepare: ../stepca/prepare.yml
-    verify: verify.yml
-    cleanup: cleanup.yml
+
 scenario:
   test_sequence:
     - destroy
