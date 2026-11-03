@@ -7,14 +7,9 @@
         docker_daemon_options:
           storage-driver: vfs
           data-root: /var/lib/docker-vfs
-          registry-mirrors:
-            - http://10.84.101.69:5000
-          insecure-registries:
-            - 10.84.101.69:5000
-            - 10.84.101.69:5001
-            - 10.84.101.69:5002
-          dns:
-            - 10.10.0.254
+          iptables: false
+          ip6tables: false
+          
   tasks:
     - name: Install Python bindings for community.docker
       ansible.builtin.package:
