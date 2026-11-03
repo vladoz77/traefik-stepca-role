@@ -22,31 +22,4 @@
         state: present
       when: ansible_facts['os_family'] == 'Debian'
 
-    - name: Start Docker and show diagnostics if it fails
-      block:
-        - name: Run pending handlers (starts docker)
-          ansible.builtin.meta: flush_handlers
-      rescue:
-        - name: Collect docker journal
-          ansible.builtin.command: journalctl -u docker.service --no-pager -n 60
-          register: docker_journal
-          changed_when: false
-          failed_when: false
-
-        - name: Collect kernel and cgroup info
-          ansible.builtin.shell: |
-            uname -r
-            stat -fc %T /sys/fs/cgroup
-            cat /etc/docker/daemon.json
-          register: docker_env
-          changed_when: false
-          failed_when: false
-
-        - name: Show diagnostics
-          ansible.builtin.debug:
-            msg: "{{ (docker_journal.stdout_lines + docker_env.stdout_lines) }}"
-
-        - name: Fail after diagnostics
-          ansible.builtin.fail:
-            msg: docker.service did not start, see journal above
 
