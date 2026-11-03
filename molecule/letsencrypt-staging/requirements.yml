@@ -1,0 +1,8 @@
+collections:
+  - name: community.docker
+    version: "3.13.0"      
+roles:
+  - name: docker
+    src: https://github.com/vladoz77/docker-roles.git
+    scm: git
+    version: v1.0.0 

@@ -349,12 +349,15 @@ curl --cacert /home/vlad/traefik/config/root_ca.crt https://traefik.int.example.
 ```bash
 python -m pip install molecule "molecule-plugins[docker]"
 ansible-galaxy collection install -r requirements.yaml
-molecule test -s stepca
+
+molecule test -s stepca                  # сценарий с локальным step-ca
+molecule test -s letsencrypt-staging     # сценарий с Let's Encrypt staging
+molecule test --all                      # оба сценария подряд
 ```
 
-Сценарий `stepca` проверяет на обеих ОС статусы healthcheck контейнеров step-ca и Traefik, выпуск сертификата для dashboard и цепочку до корневого сертификата step-ca.
+Сценарий `stepca` проверяет на обеих ОС: healthcheck контейнеров step-ca и Traefik (ожидание `healthy` до 2 минут), отсутствие перезапусков (`RestartCount == 0`) и доступность dashboard по HTTPS. Запрос выполняется с `--cacert` корневого сертификата step-ca, поэтому проверяется и доверие цепочки корню CA, и совпадение имени хоста с SAN; ответ `200` или `401` считается успехом. Для проверки домена dashboard используется docker-алиас в сети роли, публикация портов тестовых контейнеров наружу не нужна.
 
-Сценарий `letsencrypt-staging` разворачивает роль на обеих ОС, проверяет healthcheck Traefik и staging ACME endpoint. Он **не** запрашивает сертификат: для реального Let's Encrypt staging-выпуска нужны публичный домен и доступный извне HTTP-01 порт 80. Это позволяет запускать тест без DNS-настройки и без открытия портов тестовых контейнеров наружу.
+Сценарий `letsencrypt-staging` разворачивает роль на обеих ОС, ждёт healthcheck Traefik и проверяет, что dashboard-роутер отвечает по HTTPS (`--insecure`, `200` или `401`). Он **не** запрашивает сертификат: для реального Let's Encrypt staging-выпуска нужны публичный домен и доступный извне HTTP-01 порт 80. Это позволяет запускать тест без DNS-настройки и без открытия портов тестовых контейнеров наружу.
 
 Оба сценария удаляют созданные гостевые контейнеры и тестовые данные при завершении.
 

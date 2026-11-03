@@ -1,6 +1,7 @@
 driver:
   name: docker
 prerun: false
+
 platforms:
   - name: ubuntu
     image: geerlingguy/docker-ubuntu2204-ansible:latest
@@ -17,6 +18,7 @@ platforms:
     env:
       container: docker
     tty: true
+
   - name: rocky
     image: geerlingguy/docker-rockylinux9-ansible:latest
     pre_build_image: true
@@ -32,8 +34,34 @@ platforms:
     env:
       container: docker
     tty: true
+
 provisioner:
   name: ansible
+  inventory:
+    group_vars:
+      all:
+        test_root: /tmp/traefik-stepca-molecule
+        test_domain: "{{ inventory_hostname }}.test.devhomelab.site"
+        docker_network_name: "le-{{ inventory_hostname }}"
+        docker_network_subnet: 172.31.240.0/24
+        docker_network_gateway: 172.31.240.1
+        traefik_ip_address: 172.31.240.254
+        traefik_container_name: "le-{{ inventory_hostname }}-traefik"
+        traefik_docker_dir: "{{ test_root }}/traefik"
+        traefik_config_dir: "{{ traefik_docker_dir }}/config"
+        acme_config_dir: "{{ traefik_docker_dir }}/acme"
+        traefik_enable_dashboard: true
+        traefik_dashboard_url: "le-test.{{ test_domain }}"
+        stepca_enabled: false
+        letsencrypt_enabled: true
+        letsencrypt_staging_enabled: true
+        acme_email: "vladoz77@yandex.ru"
+
+dependency:
+  name: galaxy
+  options:
+    requirements-file: ${MOLECULE_SCENARIO_DIRECTORY}/requirements.yml
+
 ansible:
   playbooks:
     converge: converge.yml
@@ -48,5 +76,4 @@ scenario:
     - prepare
     - converge
     - verify
-    - cleanup
     - destroy

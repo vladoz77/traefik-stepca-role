@@ -49,6 +49,9 @@ provisioner:
         traefik_dashboard_url: "stepca-test.{{ test_domain }}"
         stepca_enabled: true
         stepca_url: "ca.{{ test_domain }}"
+        # Имя CA фиксируется в тестовом инвентаре: verify сверяет issuer
+        # выпущенного сертификата с этой переменной.
+        stepca_init_name: local-ca
         stepca_container_name: "molecule-stepca-{{ inventory_hostname }}-ca"
         stepca_docker_dir: "{{ test_root }}/stepca"
         stepca_volume_name: "molecule-stepca-{{ inventory_hostname }}-data"
